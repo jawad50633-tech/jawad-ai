@@ -308,96 +308,54 @@ if prompt:
 
         try:
 
+            # =================================================
+            # GEMINI
+            # =================================================
+
             if provider == "Gemini":
-
+            
                 if not gemini_client:
-
                     raise Exception(
                         "GEMINI_API_KEY is not configured."
                     )
 
-
-                # ------------------------------------------------
-                # Build Gemini conversation
-                # ------------------------------------------------
-
                 conversation = []
 
-                for message in st.session_state.messages[
-                    -history_limit:
-                ]:
-
+                for message in st.session_state.messages[-history_limit:]:
+                
                     role = message["role"]
-
                     content = message["content"]
 
-
                     if role == "user":
-
                         conversation.append(
                             f"User: {content}"
                         )
 
                     elif role == "assistant":
-
                         conversation.append(
                             f"Assistant: {content}"
                         )
 
+                conversation_text = "\n\n".join(conversation)
 
-                conversation_text = "\n\n".join(
-                    conversation
-                )
-
-
-                # Add system instructions
                 full_prompt = f"""
-{SYSTEM_PROMPT}
+            {SYSTEM_PROMPT}
 
-CONVERSATION:
+            CONVERSATION:
 
-{conversation_text}
+            {conversation_text}
 
-Now respond to the latest user message.
-"""
+            Now respond to the latest user message.
+            """
 
-
-                # ------------------------------------------------
-                # Gemini generation
-                # ------------------------------------------------
-
-                response = gemini_client.models.generate_content(
-
+                interaction = gemini_client.interactions.create(
                     model=model,
-
-                    contents=full_prompt,
-
-                    config={
-                        "temperature": temperature,
-                        "max_output_tokens": max_tokens
-                    }
+                    input=full_prompt
                 )
 
+                response_text = interaction.output_text
 
-                # ------------------------------------------------
-                # Get response text
-                # ------------------------------------------------
-
-                if response.text:
-
-                    response_text = response.text
-
-                else:
-
-                    response_text = (
-                        "Gemini returned an empty response."
-                    )
-
-
-                holder.markdown(
-                    response_text
-                )
-
+                holder.markdown(response_text)
 
         # =====================================================
         # ERROR HANDLING
